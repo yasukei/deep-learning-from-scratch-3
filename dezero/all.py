@@ -1987,7 +1987,7 @@ def dropout(x, dropout_ratio=0.5):
         return x
 
 
-class BatchNorm(Function):
+class F_BatchNorm(Function):
     def __init__(self, mean, var, decay, eps):
         self.avg_mean = mean
         self.avg_var = var
@@ -2056,7 +2056,7 @@ class BatchNorm(Function):
 
 
 def batch_nrom(x, gamma, beta, mean, var, decay=0.9, eps=2e-5):
-    return BatchNorm(mean, var, decay, eps)(x, gamma, beta)
+    return F_BatchNorm(mean, var, decay, eps)(x, gamma, beta)
 
 
 def embed_id(x, W):
@@ -2426,7 +2426,7 @@ class EmbedID(Layer):
         return y
 
 
-class BatchNorm(Layer):
+class L_BatchNorm(Layer):
     def __init__(self):
         super().__init__()
         # `.avg_mean` and `.avg_var` are `Parameter` objects, so they will be
@@ -2452,7 +2452,7 @@ class BatchNorm(Layer):
     def __call__(self, x):
         if self.avg_mean.data is None:
             self._init_params(x)
-        return F.batch_nrom(x, self.gamma, self.beta, self.avg_mean.data,
+        return batch_nrom(x, self.gamma, self.beta, self.avg_mean.data,
                             self.avg_var.data)
 
 
@@ -2592,7 +2592,7 @@ class ResNet(Model):
                              ' or 152, but {} was given.'.format(n_layers))
 
         self.conv1 = L_Conv2d(64, 7, 2, 3)
-        self.bn1 = L.BatchNorm()
+        self.bn1 = L_BatchNorm()
         self.res2 = BuildingBlock(block[0], 64, 64, 256, 1)
         self.res3 = BuildingBlock(block[1], 256, 128, 512, 2)
         self.res4 = BuildingBlock(block[2], 512, 256, 1024, 2)
@@ -2682,15 +2682,15 @@ class BottleneckA(Layer):
        
         self.conv1 = L_Conv2d(mid_channels, 1, stride_1x1, 0,
                               nobias=True)
-        self.bn1 = L.BatchNorm()
+        self.bn1 = L_BatchNorm()
         self.conv2 = L_Conv2d(mid_channels, 3, stride_3x3, 1,
                               nobias=True)
-        self.bn2 = L.BatchNorm()
+        self.bn2 = L_BatchNorm()
         self.conv3 = L_Conv2d(out_channels, 1, 1, 0, nobias=True)
-        self.bn3 = L.BatchNorm()
+        self.bn3 = L_BatchNorm()
         self.conv4 = L_Conv2d(out_channels, 1, stride, 0,
                               nobias=True)
-        self.bn4 = L.BatchNorm()
+        self.bn4 = L_BatchNorm()
 
     def forward(self, x):
         h1 = F.relu(self.bn1(self.conv1(x)))
@@ -2711,11 +2711,11 @@ class BottleneckB(Layer):
         super().__init__()
         
         self.conv1 = L_Conv2d(mid_channels, 1, 1, 0, nobias=True)
-        self.bn1 = L.BatchNorm()
+        self.bn1 = L_BatchNorm()
         self.conv2 = L_Conv2d(mid_channels, 3, 1, 1, nobias=True)
-        self.bn2 = L.BatchNorm()
+        self.bn2 = L_BatchNorm()
         self.conv3 = L_Conv2d(in_channels, 1, 1, 0, nobias=True)
-        self.bn3 = L.BatchNorm()
+        self.bn3 = L_BatchNorm()
 
     def forward(self, x):
         h = F.relu(self.bn1(self.conv1(x)))
