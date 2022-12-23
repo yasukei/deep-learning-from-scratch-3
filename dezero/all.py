@@ -2287,7 +2287,7 @@ class L_Conv2d(Layer):
             xp = get_array_module(x)
             self._init_W(xp)
 
-        y = F.conv2d(x, self.W, self.b, self.stride, self.pad)
+        y = conv2d(x, self.W, self.b, self.stride, self.pad)
         return y
 
 
@@ -2336,7 +2336,7 @@ class L_Deconv2d(Layer):
             xp = get_array_module(x)
             self._init_W(xp)
 
-        y = F.deconv2d(x, self.W, self.b, self.stride, self.pad)
+        y = deconv2d(x, self.W, self.b, self.stride, self.pad)
         return y
 
 
@@ -2364,9 +2364,9 @@ class RNN(Layer):
 
     def forward(self, x):
         if self.h is None:
-            h_new = F.tanh(self.x2h(x))
+            h_new = tanh(self.x2h(x))
         else:
-            h_new = F.tanh(self.x2h(x) + self.h2h(self.h))
+            h_new = tanh(self.x2h(x) + self.h2h(self.h))
         self.h = h_new
         return h_new
 
@@ -2392,22 +2392,22 @@ class LSTM(Layer):
 
     def forward(self, x):
         if self.h is None:
-            f = F.sigmoid(self.x2f(x))
-            i = F.sigmoid(self.x2i(x))
-            o = F.sigmoid(self.x2o(x))
-            u = F.tanh(self.x2u(x))
+            f = sigmoid(self.x2f(x))
+            i = sigmoid(self.x2i(x))
+            o = sigmoid(self.x2o(x))
+            u = tanh(self.x2u(x))
         else:
-            f = F.sigmoid(self.x2f(x) + self.h2f(self.h))
-            i = F.sigmoid(self.x2i(x) + self.h2i(self.h))
-            o = F.sigmoid(self.x2o(x) + self.h2o(self.h))
-            u = F.tanh(self.x2u(x) + self.h2u(self.h))
+            f = sigmoid(self.x2f(x) + self.h2f(self.h))
+            i = sigmoid(self.x2i(x) + self.h2i(self.h))
+            o = sigmoid(self.x2o(x) + self.h2o(self.h))
+            u = tanh(self.x2u(x) + self.h2u(self.h))
 
         if self.c is None:
             c_new = (i * u)
         else:
             c_new = (f * self.c) + (i * u)
 
-        h_new = o * F.tanh(c_new)
+        h_new = o * tanh(c_new)
 
         self.h, self.c = h_new, c_new
         return h_new
@@ -2536,27 +2536,27 @@ class VGG16(Model):
             self.load_weights(weights_path)
 
     def forward(self, x):
-        x = F.relu(self.conv1_1(x))
-        x = F.relu(self.conv1_2(x))
-        x = F.pooling(x, 2, 2)
-        x = F.relu(self.conv2_1(x))
-        x = F.relu(self.conv2_2(x))
-        x = F.pooling(x, 2, 2)
-        x = F.relu(self.conv3_1(x))
-        x = F.relu(self.conv3_2(x))
-        x = F.relu(self.conv3_3(x))
-        x = F.pooling(x, 2, 2)
-        x = F.relu(self.conv4_1(x))
-        x = F.relu(self.conv4_2(x))
-        x = F.relu(self.conv4_3(x))
-        x = F.pooling(x, 2, 2)
-        x = F.relu(self.conv5_1(x))
-        x = F.relu(self.conv5_2(x))
-        x = F.relu(self.conv5_3(x))
-        x = F.pooling(x, 2, 2)
-        x = F.reshape(x, (x.shape[0], -1))
-        x = F.dropout(F.relu(self.fc6(x)))
-        x = F.dropout(F.relu(self.fc7(x)))
+        x = relu(self.conv1_1(x))
+        x = relu(self.conv1_2(x))
+        x = pooling(x, 2, 2)
+        x = relu(self.conv2_1(x))
+        x = relu(self.conv2_2(x))
+        x = pooling(x, 2, 2)
+        x = relu(self.conv3_1(x))
+        x = relu(self.conv3_2(x))
+        x = relu(self.conv3_3(x))
+        x = pooling(x, 2, 2)
+        x = relu(self.conv4_1(x))
+        x = relu(self.conv4_2(x))
+        x = relu(self.conv4_3(x))
+        x = pooling(x, 2, 2)
+        x = relu(self.conv5_1(x))
+        x = relu(self.conv5_2(x))
+        x = relu(self.conv5_3(x))
+        x = pooling(x, 2, 2)
+        x = reshape(x, (x.shape[0], -1))
+        x = dropout(relu(self.fc6(x)))
+        x = dropout(relu(self.fc7(x)))
         x = self.fc8(x)
         return x
 
@@ -2604,8 +2604,8 @@ class ResNet(Model):
             self.load_weights(weights_path)
 
     def forward(self, x):
-        x = F.relu(self.bn1(self.conv1(x)))
-        x = F.pooling(x, kernel_size=3, stride=2)
+        x = relu(self.bn1(self.conv1(x)))
+        x = pooling(x, kernel_size=3, stride=2)
         x = self.res2(x)
         x = self.res3(x)
         x = self.res4(x)
@@ -2632,8 +2632,8 @@ class ResNet50(ResNet):
 
 def _global_average_pooling_2d(x):
     N, C, H, W = x.shape
-    h = F.average_pooling(x, (H, W), stride=1)
-    h = F.reshape(h, (N, C))
+    h = average_pooling(x, (H, W), stride=1)
+    h = reshape(h, (N, C))
     return h
 
 
@@ -2693,11 +2693,11 @@ class BottleneckA(Layer):
         self.bn4 = L_BatchNorm()
 
     def forward(self, x):
-        h1 = F.relu(self.bn1(self.conv1(x)))
-        h1 = F.relu(self.bn2(self.conv2(h1)))
+        h1 = relu(self.bn1(self.conv1(x)))
+        h1 = relu(self.bn2(self.conv2(h1)))
         h1 = self.bn3(self.conv3(h1))
         h2 = self.bn4(self.conv4(x))
-        return F.relu(h1 + h2)
+        return relu(h1 + h2)
 
 
 class BottleneckB(Layer):
@@ -2718,10 +2718,10 @@ class BottleneckB(Layer):
         self.bn3 = L_BatchNorm()
 
     def forward(self, x):
-        h = F.relu(self.bn1(self.conv1(x)))
-        h = F.relu(self.bn2(self.conv2(h)))
+        h = relu(self.bn1(self.conv1(x)))
+        h = relu(self.bn2(self.conv2(h)))
         h = self.bn3(self.conv3(h))
-        return F.relu(h + x)
+        return relu(h + x)
 
 
 # =============================================================================
