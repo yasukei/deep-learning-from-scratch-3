@@ -1654,7 +1654,7 @@ class Sum(Function):
         return y
 
     def backward(self, gy):
-        gy = utils.reshape_sum_backward(gy, self.x_shape, self.axis,
+        gy = reshape_sum_backward(gy, self.x_shape, self.axis,
                                         self.keepdims)
         gx = broadcast_to(gy, self.x_shape)
         return gx
@@ -2079,7 +2079,7 @@ class Max(Function):
         x = self.inputs[0]
         y = self.outputs[0]()  # weakref
 
-        shape = utils.max_backward_shape(x, self.axis)
+        shape = max_backward_shape(x, self.axis)
         gy = reshape(gy, shape)
         y = reshape(y, shape)
         cond = (x.data == y.data)
