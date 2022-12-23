@@ -1009,7 +1009,7 @@ def pooling_simple(x, kernel_size, stride=1, pad=0):
 # =============================================================================
 #  conv2d / deconv2d
 # =============================================================================
-class Conv2d(Function):
+class F_Conv2d(Function):
     def __init__(self, stride=1, pad=0):
         super().__init__()
         self.stride = pair(stride)
@@ -1043,10 +1043,10 @@ class Conv2d(Function):
 
 
 def conv2d(x, W, b=None, stride=1, pad=0):
-    return Conv2d(stride, pad)(x, W, b)
+    return F_Conv2d(stride, pad)(x, W, b)
 
 
-class Deconv2d(Function):
+class F_Deconv2d(Function):
     def __init__(self, stride=1, pad=0, outsize=None):
         super().__init__()
         self.stride = pair(stride)
@@ -1094,7 +1094,7 @@ class Deconv2d(Function):
 
 
 def deconv2d(x, W, b=None, stride=1, pad=0, outsize=None):
-    return Deconv2d(stride, pad, outsize)(x, W, b)
+    return F_Deconv2d(stride, pad, outsize)(x, W, b)
 
 
 class Conv2DGradW(Function):
@@ -2242,7 +2242,7 @@ class L_Linear(Layer):
         return y
 
 
-class Conv2d(Layer):
+class L_Conv2d(Layer):
     def __init__(self, out_channels, kernel_size, stride=1,
                  pad=0, nobias=False, dtype=np.float32, in_channels=None):
         """Two-dimensional convolutional layer.
@@ -2291,7 +2291,7 @@ class Conv2d(Layer):
         return y
 
 
-class Deconv2d(Layer):
+class L_Deconv2d(Layer):
     def __init__(self, out_channels, kernel_size, stride=1,
                  pad=0, nobias=False, dtype=np.float32, in_channels=None):
         """Two-dimensional deconvolutional (transposed convolution)layer.
@@ -2514,19 +2514,19 @@ class VGG16(Model):
 
     def __init__(self, pretrained=False):
         super().__init__()
-        self.conv1_1 = L.Conv2d(64, kernel_size=3, stride=1, pad=1)
-        self.conv1_2 = L.Conv2d(64, kernel_size=3, stride=1, pad=1)
-        self.conv2_1 = L.Conv2d(128, kernel_size=3, stride=1, pad=1)
-        self.conv2_2 = L.Conv2d(128, kernel_size=3, stride=1, pad=1)
-        self.conv3_1 = L.Conv2d(256, kernel_size=3, stride=1, pad=1)
-        self.conv3_2 = L.Conv2d(256, kernel_size=3, stride=1, pad=1)
-        self.conv3_3 = L.Conv2d(256, kernel_size=3, stride=1, pad=1)
-        self.conv4_1 = L.Conv2d(512, kernel_size=3, stride=1, pad=1)
-        self.conv4_2 = L.Conv2d(512, kernel_size=3, stride=1, pad=1)
-        self.conv4_3 = L.Conv2d(512, kernel_size=3, stride=1, pad=1)
-        self.conv5_1 = L.Conv2d(512, kernel_size=3, stride=1, pad=1)
-        self.conv5_2 = L.Conv2d(512, kernel_size=3, stride=1, pad=1)
-        self.conv5_3 = L.Conv2d(512, kernel_size=3, stride=1, pad=1)
+        self.conv1_1 = L_Conv2d(64, kernel_size=3, stride=1, pad=1)
+        self.conv1_2 = L_Conv2d(64, kernel_size=3, stride=1, pad=1)
+        self.conv2_1 = L_Conv2d(128, kernel_size=3, stride=1, pad=1)
+        self.conv2_2 = L_Conv2d(128, kernel_size=3, stride=1, pad=1)
+        self.conv3_1 = L_Conv2d(256, kernel_size=3, stride=1, pad=1)
+        self.conv3_2 = L_Conv2d(256, kernel_size=3, stride=1, pad=1)
+        self.conv3_3 = L_Conv2d(256, kernel_size=3, stride=1, pad=1)
+        self.conv4_1 = L_Conv2d(512, kernel_size=3, stride=1, pad=1)
+        self.conv4_2 = L_Conv2d(512, kernel_size=3, stride=1, pad=1)
+        self.conv4_3 = L_Conv2d(512, kernel_size=3, stride=1, pad=1)
+        self.conv5_1 = L_Conv2d(512, kernel_size=3, stride=1, pad=1)
+        self.conv5_2 = L_Conv2d(512, kernel_size=3, stride=1, pad=1)
+        self.conv5_3 = L_Conv2d(512, kernel_size=3, stride=1, pad=1)
         self.fc6 = L_Linear(4096)
         self.fc7 = L_Linear(4096)
         self.fc8 = L_Linear(1000)
@@ -2591,7 +2591,7 @@ class ResNet(Model):
             raise ValueError('The n_layers argument should be either 50, 101,'
                              ' or 152, but {} was given.'.format(n_layers))
 
-        self.conv1 = L.Conv2d(64, 7, 2, 3)
+        self.conv1 = L_Conv2d(64, 7, 2, 3)
         self.bn1 = L.BatchNorm()
         self.res2 = BuildingBlock(block[0], 64, 64, 256, 1)
         self.res3 = BuildingBlock(block[1], 256, 128, 512, 2)
@@ -2680,15 +2680,15 @@ class BottleneckA(Layer):
         # In Facebook ResNet, stride=2 is on 3x3 convolution.
         stride_1x1, stride_3x3 = (1, stride) if downsample_fb else (stride, 1)
        
-        self.conv1 = L.Conv2d(mid_channels, 1, stride_1x1, 0,
+        self.conv1 = L_Conv2d(mid_channels, 1, stride_1x1, 0,
                               nobias=True)
         self.bn1 = L.BatchNorm()
-        self.conv2 = L.Conv2d(mid_channels, 3, stride_3x3, 1,
+        self.conv2 = L_Conv2d(mid_channels, 3, stride_3x3, 1,
                               nobias=True)
         self.bn2 = L.BatchNorm()
-        self.conv3 = L.Conv2d(out_channels, 1, 1, 0, nobias=True)
+        self.conv3 = L_Conv2d(out_channels, 1, 1, 0, nobias=True)
         self.bn3 = L.BatchNorm()
-        self.conv4 = L.Conv2d(out_channels, 1, stride, 0,
+        self.conv4 = L_Conv2d(out_channels, 1, stride, 0,
                               nobias=True)
         self.bn4 = L.BatchNorm()
 
@@ -2710,11 +2710,11 @@ class BottleneckB(Layer):
     def __init__(self, in_channels, mid_channels):
         super().__init__()
         
-        self.conv1 = L.Conv2d(mid_channels, 1, 1, 0, nobias=True)
+        self.conv1 = L_Conv2d(mid_channels, 1, 1, 0, nobias=True)
         self.bn1 = L.BatchNorm()
-        self.conv2 = L.Conv2d(mid_channels, 3, 1, 1, nobias=True)
+        self.conv2 = L_Conv2d(mid_channels, 3, 1, 1, nobias=True)
         self.bn2 = L.BatchNorm()
-        self.conv3 = L.Conv2d(in_channels, 1, 1, 0, nobias=True)
+        self.conv3 = L_Conv2d(in_channels, 1, 1, 0, nobias=True)
         self.bn3 = L.BatchNorm()
 
     def forward(self, x):
