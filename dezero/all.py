@@ -201,7 +201,7 @@ class Variable:
     def reshape(self, *shape):
         if len(shape) == 1 and isinstance(shape[0], (tuple, list)):
             shape = shape[0]
-        return dezero.functions.reshape(self, shape)
+        return reshape(self, shape)
 
     def transpose(self, *axes):
         if len(axes) == 0:
@@ -209,14 +209,14 @@ class Variable:
         elif len(axes) == 1:
             if isinstance(axes[0], (tuple, list)) or axes[0] is None:
                 axes = axes[0]
-        return dezero.functions.transpose(self, axes)
+        return transpose(self, axes)
 
     @property
     def T(self):
-        return dezero.functions.transpose(self)
+        return transpose(self)
 
     def sum(self, axis=None, keepdims=False):
-        return dezero.functions.sum(self, axis, keepdims)
+        return F_sum(self, axis, keepdims)
 
     def to_cpu(self):
         if self.data is not None:
@@ -1660,7 +1660,7 @@ class Sum(Function):
         return gx
 
 
-def sum(x, axis=None, keepdims=False):
+def F_sum(x, axis=None, keepdims=False):
     return Sum(axis, keepdims)(x)
 
 
@@ -1730,7 +1730,7 @@ def matmul(x, W):
     return MatMul()(x, W)
 
 
-class Linear(Function):
+class F_Linear(Function):
     def forward(self, x, W, b):
         y = x.dot(W)
         if b is not None:
@@ -1746,7 +1746,7 @@ class Linear(Function):
 
 
 def linear(x, W, b=None):
-    return Linear()(x, W, b)
+    return F_Linear()(x, W, b)
 
 
 def linear_simple(x, W, b=None):
@@ -2211,7 +2211,7 @@ class Layer:
 # =============================================================================
 # Linear / Conv2d / Deconv2d
 # =============================================================================
-class Linear(Layer):
+class L_Linear(Layer):
     def __init__(self, out_size, nobias=False, dtype=np.float32, in_size=None):
         super().__init__()
         self.in_size = in_size
@@ -2238,7 +2238,7 @@ class Linear(Layer):
             xp = get_array_module(x)
             self._init_W(xp)
 
-        y = F.linear(x, self.W, self.b)
+        y = linear(x, self.W, self.b)
         return y
 
 
@@ -2355,8 +2355,8 @@ class RNN(Layer):
 
         """
         super().__init__()
-        self.x2h = Linear(hidden_size, in_size=in_size)
-        self.h2h = Linear(hidden_size, in_size=in_size, nobias=True)
+        self.x2h = L_Linear(hidden_size, in_size=in_size)
+        self.h2h = L_Linear(hidden_size, in_size=in_size, nobias=True)
         self.h = None
 
     def reset_state(self):
@@ -2376,14 +2376,14 @@ class LSTM(Layer):
         super().__init__()
 
         H, I = hidden_size, in_size
-        self.x2f = Linear(H, in_size=I)
-        self.x2i = Linear(H, in_size=I)
-        self.x2o = Linear(H, in_size=I)
-        self.x2u = Linear(H, in_size=I)
-        self.h2f = Linear(H, in_size=H, nobias=True)
-        self.h2i = Linear(H, in_size=H, nobias=True)
-        self.h2o = Linear(H, in_size=H, nobias=True)
-        self.h2u = Linear(H, in_size=H, nobias=True)
+        self.x2f = L_Linear(H, in_size=I)
+        self.x2i = L_Linear(H, in_size=I)
+        self.x2o = L_Linear(H, in_size=I)
+        self.x2u = L_Linear(H, in_size=I)
+        self.h2f = L_Linear(H, in_size=H, nobias=True)
+        self.h2i = L_Linear(H, in_size=H, nobias=True)
+        self.h2o = L_Linear(H, in_size=H, nobias=True)
+        self.h2u = L_Linear(H, in_size=H, nobias=True)
         self.reset_state()
 
     def reset_state(self):
@@ -2496,7 +2496,7 @@ class MLP(Model):
         self.layers = []
 
         for i, out_size in enumerate(fc_output_sizes):
-            layer = L.Linear(out_size)
+            layer = L_Linear(out_size)
             setattr(self, 'l' + str(i), layer)
             self.layers.append(layer)
 
@@ -2527,9 +2527,9 @@ class VGG16(Model):
         self.conv5_1 = L.Conv2d(512, kernel_size=3, stride=1, pad=1)
         self.conv5_2 = L.Conv2d(512, kernel_size=3, stride=1, pad=1)
         self.conv5_3 = L.Conv2d(512, kernel_size=3, stride=1, pad=1)
-        self.fc6 = L.Linear(4096)
-        self.fc7 = L.Linear(4096)
-        self.fc8 = L.Linear(1000)
+        self.fc6 = L_Linear(4096)
+        self.fc7 = L_Linear(4096)
+        self.fc8 = L_Linear(1000)
 
         if pretrained:
             weights_path = utils.get_file(VGG16.WEIGHTS_PATH)
@@ -2597,7 +2597,7 @@ class ResNet(Model):
         self.res3 = BuildingBlock(block[1], 256, 128, 512, 2)
         self.res4 = BuildingBlock(block[2], 512, 256, 1024, 2)
         self.res5 = BuildingBlock(block[3], 1024, 512, 2048, 2)
-        self.fc6 = L.Linear(1000)
+        self.fc6 = L_Linear(1000)
 
         if pretrained:
             weights_path = utils.get_file(ResNet.WEIGHTS_PATH.format(n_layers))
