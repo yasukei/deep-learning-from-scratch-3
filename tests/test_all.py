@@ -747,13 +747,12 @@ class TestLinear(unittest.TestCase):
         f = lambda x: linear(x, W, b)
         self.assertTrue(gradient_check(f, x))
 
-# TODO
-#    def test_backward2(self):
-#        x = np.random.randn(100, 200)
-#        W = np.random.randn(200, 300)
-#        b = None
-#        f = lambda x: linear(x, W, b)
-#        self.assertTrue(gradient_check(f, x))
+    def test_backward2(self):
+        x = np.random.randn(100, 200)
+        W = np.random.randn(200, 300)
+        b = None
+        f = lambda x: linear(x, W, b)
+        self.assertTrue(gradient_check(f, x))
 
 
 # =============================================================================
