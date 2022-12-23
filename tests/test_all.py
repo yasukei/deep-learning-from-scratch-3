@@ -126,6 +126,15 @@ class TestDiv(unittest.TestCase):
 # =============================================================================
 # =============================================================================
 # =============================================================================
+class TestBroadcast(unittest.TestCase):
+
+    def test_shape_check(self):
+        x = Variable(np.random.randn(1, 10))
+        b = Variable(np.random.randn(10))
+        y = x + b
+        loss = F_sum(y)
+        loss.backward()
+        self.assertEqual(b.grad.shape, b.shape)
 
 
 # =============================================================================
@@ -570,6 +579,28 @@ class TestSumTo(unittest.TestCase):
 # =============================================================================
 # =============================================================================
 # =============================================================================
+class TestTranspose(unittest.TestCase):
+
+    def test_forward1(self):
+        x = Variable(np.array([[1, 2, 3], [4, 5, 6]]))
+        y = transpose(x)
+        self.assertEqual(y.shape, (3, 2))
+
+    def test_backward1(self):
+        x = np.array([[1, 2, 3], [4, 5, 6]])
+        self.assertTrue(gradient_check(transpose, x))
+
+    def test_backward2(self):
+        x = np.array([1, 2, 3])
+        self.assertTrue(gradient_check(transpose, x))
+
+    def test_backward3(self):
+        x = np.random.randn(10, 5)
+        self.assertTrue(gradient_check(transpose, x))
+
+    def test_backward4(self):
+        x = np.array([1, 2])
+        self.assertTrue(gradient_check(transpose, x))
 
 
 # =============================================================================
