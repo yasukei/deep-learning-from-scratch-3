@@ -1707,7 +1707,7 @@ def broadcast_to(x, shape):
 
 def average(x, axis=None, keepdims=False):
     x = as_variable(x)
-    y = sum(x, axis, keepdims)
+    y = F_sum(x, axis, keepdims)
     return y * (y.data.size / x.data.size)
 
 
@@ -1805,7 +1805,7 @@ def relu(x):
 def softmax_simple(x, axis=1):
     x = as_variable(x)
     y = exp(x)
-    sum_y = sum(y, axis=axis, keepdims=True)
+    sum_y = F_sum(y, axis=axis, keepdims=True)
     return y / sum_y
 
 
@@ -1837,7 +1837,7 @@ class LogSoftmax(Function):
         self.axis = axis
 
     def forward(self, x):
-        log_z = utils.logsumexp(x, self.axis)
+        log_z = logsumexp(x, self.axis)
         y = x - log_z
         return y
 
@@ -1914,7 +1914,7 @@ def softmax_cross_entropy_simple(x, t):
 class SoftmaxCrossEntropy(Function):
     def forward(self, x, t):
         N = x.shape[0]
-        log_z = utils.logsumexp(x, axis=1)
+        log_z = logsumexp(x, axis=1)
         log_p = x - log_z
         log_p = log_p[np.arange(N), t.ravel()]
         y = -log_p.sum() / np.float32(N)
@@ -2045,8 +2045,8 @@ class BatchNorm(Function):
         mean = x.sum(axis=0) / batch_size
         xc = (x - mean) * self.inv_std
 
-        gbeta = sum(gy, axis=0)
-        ggamma = sum(xc * gy, axis=0)
+        gbeta = F_sum(gy, axis=0)
+        ggamma = F_sum(xc * gy, axis=0)
         gx = gy - gbeta / batch_size - xc * ggamma / batch_size
         gx *= gamma * self.inv_std
 
@@ -2472,7 +2472,7 @@ class BatchNorm(Layer):
 class Model(Layer):
     def plot(self, *inputs, to_file='model.png'):
         y = self.forward(*inputs)
-        return utils.plot_dot_graph(y, verbose=True, to_file=to_file)
+        return plot_dot_graph(y, verbose=True, to_file=to_file)
 
 
 class Sequential(Model):
@@ -2532,7 +2532,7 @@ class VGG16(Model):
         self.fc8 = L_Linear(1000)
 
         if pretrained:
-            weights_path = utils.get_file(VGG16.WEIGHTS_PATH)
+            weights_path = get_file(VGG16.WEIGHTS_PATH)
             self.load_weights(weights_path)
 
     def forward(self, x):
@@ -2600,7 +2600,7 @@ class ResNet(Model):
         self.fc6 = L_Linear(1000)
 
         if pretrained:
-            weights_path = utils.get_file(ResNet.WEIGHTS_PATH.format(n_layers))
+            weights_path = get_file(ResNet.WEIGHTS_PATH.format(n_layers))
             self.load_weights(weights_path)
 
     def forward(self, x):
