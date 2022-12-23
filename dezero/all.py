@@ -110,11 +110,11 @@ class Variable:
     def dot(self, other):
         return matmul(self, other)
 
-    def max(self, other):
-        return F_max(self, other)
+    def max(self, axis=None, keepdims=False):
+        return F_max(self, axis, keepdims)
 
-    def min(self, other):
-        return F_min(self, other)
+    def min(self, axis=None, keepdims=False):
+        return F_min(self, axis, keepdims)
 
     @property
     def shape(self):
