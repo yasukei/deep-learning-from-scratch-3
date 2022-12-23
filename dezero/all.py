@@ -1,3 +1,16 @@
+import contextlib
+import gzip
+import math
+import os
+import pickle
+import subprocess
+import tarfile
+import urllib.request
+import weakref
+
+
+import numpy as np
+
 # =============================================================================
 # =============================================================================
 # =============================================================================
@@ -7,10 +20,6 @@
 # =============================================================================
 # =============================================================================
 # =============================================================================
-import weakref
-import numpy as np
-import contextlib
-import dezero
 
 
 # =============================================================================
@@ -366,14 +375,12 @@ def setup_variable():
 # =============================================================================
 # =============================================================================
 # =============================================================================
-import numpy as np
 gpu_enable = True
 try:
     import cupy as cp
     cupy = cp
 except ImportError:
     gpu_enable = False
-from dezero import Variable
 
 
 def get_array_module(x):
@@ -440,14 +447,11 @@ def as_cupy(x):
 # =============================================================================
 # =============================================================================
 # =============================================================================
-import math
 pil_available = True
 try:
     from PIL import Image
 except:
     pil_available = False
-import numpy as np
-from dezero import cuda
 
 
 class DataLoader:
@@ -529,16 +533,6 @@ class SeqDataLoader(DataLoader):
 # =============================================================================
 # =============================================================================
 # =============================================================================
-import os
-import gzip
-import tarfile
-import pickle
-import numpy as np
-import matplotlib.pyplot as plt
-from dezero.utils import get_file, cache_dir
-from dezero.transforms import Compose, Flatten, ToFloat, Normalize
-
-
 class Dataset:
     def __init__(self, train=True, transform=None, target_transform=None):
         self.train = train
@@ -644,9 +638,9 @@ class MNIST(Dataset):
             for c in range(col):
                 img[r * H:(r + 1) * H, c * W:(c + 1) * W] = self.data[
                     np.random.randint(0, len(self.data) - 1)].reshape(H, W)
-        plt.imshow(img, cmap='gray', interpolation='nearest')
-        plt.axis('off')
-        plt.show()
+        # plt.imshow(img, cmap='gray', interpolation='nearest')
+        # plt.axis('off')
+        # plt.show()
 
     @staticmethod
     def labels():
@@ -704,9 +698,9 @@ class CIFAR10(Dataset):
         for r in range(row):
             for c in range(col):
                 img[r*H:(r+1)*H, c*W:(c+1)*W] = self.data[np.random.randint(0, len(self.data)-1)].reshape(3,H,W).transpose(1,2,0)/255
-        plt.imshow(img, interpolation='nearest')
-        plt.axis('off')
-        plt.show()
+        # plt.imshow(img, interpolation='nearest')
+        # plt.axis('off')
+        # plt.show()
 
     @staticmethod
     def labels():
@@ -872,12 +866,6 @@ def save_cache_npz(data, label, filename, train=False):
 # =============================================================================
 # =============================================================================
 # =============================================================================
-import numpy as np
-from dezero import cuda
-from dezero.core import Function, as_variable
-from dezero.utils import pair, get_conv_outsize, get_deconv_outsize
-from dezero.functions import linear, broadcast_to
-
 
 # =============================================================================
 # [simple version] conv2d_simple / pooling_simple
@@ -1374,11 +1362,6 @@ def _col2im_gpu(col, sy, sx, ph, pw, h, w):
 # =============================================================================
 # =============================================================================
 # =============================================================================
-import numpy as np
-import dezero
-from dezero import cuda, utils
-from dezero.core import Function, Variable, as_variable, as_array
-
 
 # =============================================================================
 # Basic functions: sin / cos / tanh / exp / log
@@ -2037,25 +2020,6 @@ class Clip(Function):
 def clip(x, x_min, x_max):
     return Clip(x_min, x_max)(x)
 
-# =============================================================================
-# conv2d / col2im / im2col / basic_math
-# =============================================================================
-from dezero.functions_conv import conv2d
-from dezero.functions_conv import deconv2d
-from dezero.functions_conv import conv2d_simple
-from dezero.functions_conv import im2col
-from dezero.functions_conv import col2im
-from dezero.functions_conv import pooling_simple
-from dezero.functions_conv import pooling
-from dezero.functions_conv import average_pooling
-from dezero.core import add
-from dezero.core import sub
-from dezero.core import rsub
-from dezero.core import mul
-from dezero.core import div
-from dezero.core import neg
-from dezero.core import pow
-
 
 # =============================================================================
 # =============================================================================
@@ -2066,14 +2030,6 @@ from dezero.core import pow
 # =============================================================================
 # =============================================================================
 # =============================================================================
-import os
-import weakref
-import numpy as np
-import dezero.functions as F
-from dezero import cuda
-from dezero.core import Parameter
-from dezero.utils import pair
-
 
 # =============================================================================
 # Layer (base class)
@@ -2408,13 +2364,6 @@ class BatchNorm(Layer):
 # =============================================================================
 # =============================================================================
 # =============================================================================
-import numpy as np
-from dezero import Layer
-import dezero.functions as F
-import dezero.layers as L
-from dezero import utils
-
-
 
 # =============================================================================
 # Model / Sequential / MLP
@@ -2693,9 +2642,6 @@ class SqueezeNet(Model):
 # =============================================================================
 # =============================================================================
 # =============================================================================
-import math
-from dezero import cuda, Parameter
-
 
 # =============================================================================
 # Optimizer (base class)
@@ -2899,12 +2845,10 @@ class Adam(Optimizer):
 # =============================================================================
 # =============================================================================
 # =============================================================================
-import numpy as np
 try:
     import Image
 except ImportError:
     from PIL import Image
-from dezero.utils import pair
 
 
 class Compose:
@@ -3065,14 +3009,6 @@ class ToInt(AsType):
 # =============================================================================
 # =============================================================================
 # =============================================================================
-import os
-import subprocess
-import urllib.request
-import numpy as np
-from dezero import as_variable
-from dezero import Variable
-from dezero import cuda
-
 
 # =============================================================================
 # Visualize for computational graph
@@ -3456,3 +3392,5 @@ def pair(x):
         return x
     else:
         raise ValueError
+
+print('hello')
