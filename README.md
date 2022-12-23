@@ -1,3 +1,11 @@
+This is dezero in one python file. It is for atcoder.
+
+dezero/all.py is product code.
+
+dezero/test_all.py is test code.
+
+<!--
+
 <p>
 <a href="https://www.amazon.co.jp/dp/4873119065/ref=cm_sw_r_tw_dp_U_x_KiA1Eb39SW14Q"><img src="https://raw.githubusercontent.com/oreilly-japan/deep-learning-from-scratch-3/images/deep-learning-from-scratch-3.png" height="250"></a>
 </p>
@@ -81,3 +89,5 @@ DeZeroの他の実装例は[examples](/examples)にあります。
 本書の正誤情報は、[:mag_right: 正誤表ページ](../../wiki/Errata)に掲載しています。
 
 正誤表ページに掲載されていない誤植や間違いなどを見つけた方は、[:email: japan@oreilly.co.jp](<mailto:japan@oreilly.co.jp>)までお知らせください。
+
+-->
