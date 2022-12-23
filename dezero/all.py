@@ -71,6 +71,51 @@ class Variable:
         self.creator = None
         self.generation = 0
 
+    def __add__(self, other):
+        return add(self, other)
+
+    def __radd__(self, other):
+        return add(self, other)
+
+    def __mul__(self, other):
+        return mul(self, other)
+
+    def __rmul__(self, other):
+        return mul(self, other)
+
+    def __neg__(self):
+        return neg(self)
+
+    def __sub__(self, other):
+        return sub(self, other)
+
+    def __rsub__(self, other):
+        return rsub(self, other)
+
+    def __truediv__(self, other):
+        return div(self, other)
+
+    def __rtruediv__(self, other):
+        return rdiv(self, other)
+
+    def __pow__(self, other):
+        return pow(self, other)
+
+    def __getitem__(self, other):
+        return get_item(self, other)
+
+    def matmul(self, other):
+        return matmul(self, other)
+
+    def dot(self, other):
+        return matmul(self, other)
+
+    def max(self, other):
+        return F_max(self, other)
+
+    def min(self, other):
+        return F_min(self, other)
+
     @property
     def shape(self):
         return self.data.shape
@@ -108,7 +153,7 @@ class Variable:
 
     def backward(self, retain_grad=False, create_graph=False):
         if self.grad is None:
-            xp = dezero.cuda.get_array_module(self.data)
+            xp = get_array_module(self.data)
             self.grad = Variable(xp.ones_like(self.data))
 
         funcs = []
@@ -175,11 +220,11 @@ class Variable:
 
     def to_cpu(self):
         if self.data is not None:
-            self.data = dezero.cuda.as_numpy(self.data)
+            self.data = as_numpy(self.data)
 
     def to_gpu(self):
         if self.data is not None:
-            self.data = dezero.cuda.as_cupy(self.data)
+            self.data = as_cupy(self.data)
 
 
 class Parameter(Variable):
@@ -236,13 +281,13 @@ class Add(Function):
     def backward(self, gy):
         gx0, gx1 = gy, gy
         if self.x0_shape != self.x1_shape:  # for broadcaset
-            gx0 = dezero.functions.sum_to(gx0, self.x0_shape)
-            gx1 = dezero.functions.sum_to(gx1, self.x1_shape)
+            gx0 = F_sum_to(gx0, self.x0_shape)
+            gx1 = F_sum_to(gx1, self.x1_shape)
         return gx0, gx1
 
 
 def add(x0, x1):
-    x1 = as_array(x1, dezero.cuda.get_array_module(x0.data))
+    x1 = as_array(x1, get_array_module(x0.data))
     return Add()(x0, x1)
 
 
@@ -256,13 +301,13 @@ class Mul(Function):
         gx0 = gy * x1
         gx1 = gy * x0
         if x0.shape != x1.shape:  # for broadcast
-            gx0 = dezero.functions.sum_to(gx0, x0.shape)
-            gx1 = dezero.functions.sum_to(gx1, x1.shape)
+            gx0 = F_sum_to(gx0, x0.shape)
+            gx1 = F_sum_to(gx1, x1.shape)
         return gx0, gx1
 
 
 def mul(x0, x1):
-    x1 = as_array(x1, dezero.cuda.get_array_module(x0.data))
+    x1 = as_array(x1, get_array_module(x0.data))
     return Mul()(x0, x1)
 
 
@@ -288,18 +333,18 @@ class Sub(Function):
         gx0 = gy
         gx1 = -gy
         if self.x0_shape != self.x1_shape:  # for broadcast
-            gx0 = dezero.functions.sum_to(gx0, self.x0_shape)
-            gx1 = dezero.functions.sum_to(gx1, self.x1_shape)
+            gx0 = F_sum_to(gx0, self.x0_shape)
+            gx1 = F_sum_to(gx1, self.x1_shape)
         return gx0, gx1
 
 
 def sub(x0, x1):
-    x1 = as_array(x1, dezero.cuda.get_array_module(x0.data))
+    x1 = as_array(x1, get_array_module(x0.data))
     return Sub()(x0, x1)
 
 
 def rsub(x0, x1):
-    x1 = as_array(x1, dezero.cuda.get_array_module(x0.data))
+    x1 = as_array(x1, get_array_module(x0.data))
     return Sub()(x1, x0)
 
 
@@ -313,18 +358,18 @@ class Div(Function):
         gx0 = gy / x1
         gx1 = gy * (-x0 / x1 ** 2)
         if x0.shape != x1.shape:  # for broadcast
-            gx0 = dezero.functions.sum_to(gx0, x0.shape)
-            gx1 = dezero.functions.sum_to(gx1, x1.shape)
+            gx0 = F_sum_to(gx0, x0.shape)
+            gx1 = F_sum_to(gx1, x1.shape)
         return gx0, gx1
 
 
 def div(x0, x1):
-    x1 = as_array(x1, dezero.cuda.get_array_module(x0.data))
+    x1 = as_array(x1, get_array_module(x0.data))
     return Div()(x0, x1)
 
 
 def rdiv(x0, x1):
-    x1 = as_array(x1, dezero.cuda.get_array_module(x0.data))
+    x1 = as_array(x1, get_array_module(x0.data))
     return Div()(x1, x0)
 
 
@@ -346,24 +391,6 @@ class Pow(Function):
 def pow(x, c):
     return Pow(c)(x)
 
-
-def setup_variable():
-    Variable.__add__ = add
-    Variable.__radd__ = add
-    Variable.__mul__ = mul
-    Variable.__rmul__ = mul
-    Variable.__neg__ = neg
-    Variable.__sub__ = sub
-    Variable.__rsub__ = rsub
-    Variable.__truediv__ = div
-    Variable.__rtruediv__ = rdiv
-    Variable.__pow__ = pow
-    Variable.__getitem__ = dezero.functions.get_item
-
-    Variable.matmul = dezero.functions.matmul
-    Variable.dot = dezero.functions.matmul
-    Variable.max = dezero.functions.max
-    Variable.min = dezero.functions.min
 
 
 # =============================================================================
@@ -484,7 +511,7 @@ class DataLoader:
         batch_index = self.index[i * batch_size:(i + 1) * batch_size]
         batch = [self.dataset[i] for i in batch_index]
 
-        xp = cuda.cupy if self.gpu else np
+        xp = cupy if self.gpu else np
         x = xp.array([example[0] for example in batch])
         t = xp.array([example[1] for example in batch])
 
@@ -516,7 +543,7 @@ class SeqDataLoader(DataLoader):
                        range(self.batch_size)]
         batch = [self.dataset[i] for i in batch_index]
 
-        xp = cuda.cupy if self.gpu else np
+        xp = cupy if self.gpu else np
         x = xp.array([example[0] for example in batch])
         t = xp.array([example[1] for example in batch])
 
@@ -989,7 +1016,7 @@ class Conv2d(Function):
         self.pad = pair(pad)
 
     def forward(self, x, W, b):
-        xp = cuda.get_array_module(x)
+        xp = get_array_module(x)
 
         KH, KW = W.shape[2:]
         col = im2col_array(x, (KH, KW), self.stride, self.pad, to_matrix=False)
@@ -1027,7 +1054,7 @@ class Deconv2d(Function):
         self.outsize = outsize
 
     def forward(self, x, W, b):
-        xp = cuda.get_array_module(x)
+        xp = get_array_module(x)
 
         Weight = W
         SH, SW = self.stride
@@ -1079,7 +1106,7 @@ class Conv2DGradW(Function):
         self.pad = conv2d.pad
 
     def forward(self, x, gy):
-        xp = cuda.get_array_module(x)
+        xp = get_array_module(x)
 
         col = im2col_array(x, self.kernel_size, self.stride, self.pad,
                            to_matrix=False)
@@ -1132,7 +1159,7 @@ class Pooling2DGrad(Function):
         self.indexes = mpool2d.indexes
 
     def forward(self, gy):
-        xp = cuda.get_array_module(gy)
+        xp = get_array_module(gy)
 
         N, C, OH, OW = gy.shape
         N, C, H, W = self.input_shape
@@ -1302,7 +1329,7 @@ def im2col_array(img, kernel_size, stride, pad, to_matrix=True):
     OH = get_conv_outsize(H, KH, SH, PH)
     OW = get_conv_outsize(W, KW, SW, PW)
 
-    xp = cuda.get_array_module(img)
+    xp = get_array_module(img)
     if xp != np:
         col = _im2col_gpu(img, kernel_size, stride, pad)
     else:
@@ -1334,7 +1361,7 @@ def col2im_array(col, img_shape, kernel_size, stride, pad, to_matrix=True):
     if to_matrix:
         col = col.reshape(N, OH, OW, C, KH, KW).transpose(0, 3, 4, 5, 1, 2)
 
-    xp = cuda.get_array_module(col)
+    xp = get_array_module(col)
     if xp != np:
         img = _col2im_gpu(col, SH, SW, PH, PW, H, W)
         return img
@@ -1361,9 +1388,9 @@ def _im2col_gpu(img, kernel_size, stride, pad):
     out_h = get_conv_outsize(h, kh, sy, ph)
     out_w = get_conv_outsize(w, kw, sx, pw)
     dy, dx = 1, 1
-    col = cuda.cupy.empty((n, c, kh, kw, out_h, out_w), dtype=img.dtype)
+    col = cupy.empty((n, c, kh, kw, out_h, out_w), dtype=img.dtype)
 
-    cuda.cupy.ElementwiseKernel(
+    cupy.ElementwiseKernel(
         'raw T img, int32 h, int32 w, int32 out_h, int32 out_w,'
         'int32 kh, int32 kw, int32 sy, int32 sx, int32 ph, int32 pw,'
         'int32 dy, int32 dx',
@@ -1395,9 +1422,9 @@ def _col2im_gpu(col, sy, sx, ph, pw, h, w):
     """
     n, c, kh, kw, out_h, out_w = col.shape
     dx, dy = 1, 1
-    img = cuda.cupy.empty((n, c, h, w), dtype=col.dtype)
+    img = cupy.empty((n, c, h, w), dtype=col.dtype)
 
-    cuda.cupy.ElementwiseKernel(
+    cupy.ElementwiseKernel(
         'raw T col, int32 h, int32 w, int32 out_h, int32 out_w,'
         'int32 kh, int32 kw, int32 sy, int32 sx, int32 ph, int32 pw,'
         'int32 dx, int32 dy',
@@ -1442,7 +1469,7 @@ def _col2im_gpu(col, sy, sx, ph, pw, h, w):
 # =============================================================================
 class Sin(Function):
     def forward(self, x):
-        xp = cuda.get_array_module(x)
+        xp = get_array_module(x)
         y = xp.sin(x)
         return y
 
@@ -1458,7 +1485,7 @@ def sin(x):
 
 class Cos(Function):
     def forward(self, x):
-        xp = cuda.get_array_module(x)
+        xp = get_array_module(x)
         y = xp.cos(x)
         return y
 
@@ -1474,7 +1501,7 @@ def cos(x):
 
 class Tanh(Function):
     def forward(self, x):
-        xp = cuda.get_array_module(x)
+        xp = get_array_module(x)
         y = xp.tanh(x)
         return y
 
@@ -1490,7 +1517,7 @@ def tanh(x):
 
 class Exp(Function):
     def forward(self, x):
-        xp = cuda.get_array_module(x)
+        xp = get_array_module(x)
         y = xp.exp(x)
         return y
 
@@ -1506,7 +1533,7 @@ def exp(x):
 
 class Log(Function):
     def forward(self, x):
-        xp = cuda.get_array_module(x)
+        xp = get_array_module(x)
         y = xp.log(x)
         return y
 
@@ -1583,7 +1610,7 @@ class GetItemGrad(Function):
         self.in_shape = in_shape
 
     def forward(self, gy):
-        xp = dezero.cuda.get_array_module(gy)
+        xp = get_array_module(gy)
         gx = xp.zeros(self.in_shape, dtype=gy.dtype)
 
         if xp is np:
@@ -1643,7 +1670,7 @@ class SumTo(Function):
 
     def forward(self, x):
         self.x_shape = x.shape
-        y = utils.sum_to(x, self.shape)
+        y = U_sum_to(x, self.shape)
         return y
 
     def backward(self, gy):
@@ -1651,7 +1678,7 @@ class SumTo(Function):
         return gx
 
 
-def sum_to(x, shape):
+def F_sum_to(x, shape):
     if x.shape == shape:
         return as_variable(x)
     return SumTo(shape)(x)
@@ -1663,12 +1690,12 @@ class BroadcastTo(Function):
 
     def forward(self, x):
         self.x_shape = x.shape
-        xp = dezero.cuda.get_array_module(x)
+        xp = get_array_module(x)
         y = xp.broadcast_to(x, self.shape)
         return y
 
     def backward(self, gy):
-        gx = sum_to(gy, self.x_shape)
+        gx = F_sum_to(gy, self.x_shape)
         return gx
 
 
@@ -1712,7 +1739,7 @@ class Linear(Function):
 
     def backward(self, gy):
         x, W, b = self.inputs
-        gb = None if b.data is None else sum_to(gy, b.shape)
+        gb = None if b.data is None else F_sum_to(gy, b.shape)
         gx = matmul(gy, W.T)
         gW = matmul(x.T, gy)
         return gx, gW, gb
@@ -1743,7 +1770,7 @@ def sigmoid_simple(x):
 
 class Sigmoid(Function):
     def forward(self, x):
-        xp = cuda.get_array_module(x)
+        xp = get_array_module(x)
         # y = 1 / (1 + xp.exp(-x))
         y = xp.tanh(x * 0.5) * 0.5 + 0.5  # Better implementation
         return y
@@ -1760,7 +1787,7 @@ def sigmoid(x):
 
 class ReLU(Function):
     def forward(self, x):
-        xp = cuda.get_array_module(x)
+        xp = get_array_module(x)
         y = xp.maximum(x, 0.0)
         return y
 
@@ -1787,7 +1814,7 @@ class Softmax(Function):
         self.axis = axis
 
     def forward(self, x):
-        xp = cuda.get_array_module(x)
+        xp = get_array_module(x)
         y = x - x.max(axis=self.axis, keepdims=True)
         y = xp.exp(y)
         y /= y.sum(axis=self.axis, keepdims=True)
@@ -1900,7 +1927,7 @@ class SoftmaxCrossEntropy(Function):
         gy *= 1/N
         y = softmax(x)
         # convert to one-hot
-        xp = cuda.get_array_module(t.data)
+        xp = get_array_module(t.data)
         t_onehot = xp.eye(CLS_NUM, dtype=t.dtype)[t.data]
         y = (y - t_onehot) * gy
         return y
@@ -1951,7 +1978,7 @@ def dropout(x, dropout_ratio=0.5):
     x = as_variable(x)
 
     if dezero.Config.train:
-        xp = cuda.get_array_module(x)
+        xp = get_array_module(x)
         mask = xp.random.rand(*x.shape) > dropout_ratio
         scale = xp.array(1.0 - dropout_ratio).astype(x.dtype)
         y = x * mask / scale
@@ -1977,7 +2004,7 @@ class BatchNorm(Function):
             # (N, C, H, W) -> (N*H*W, C)
             x = x.transpose(0, 2, 3, 1).reshape(-1, C)
 
-        xp = cuda.get_array_module(x)
+        xp = get_array_module(x)
 
         if dezero.Config.train:
             mean = x.mean(axis=0)
@@ -2066,11 +2093,11 @@ class Min(Max):
         return y
 
 
-def max(x, axis=None, keepdims=False):
+def F_max(x, axis=None, keepdims=False):
     return Max(axis, keepdims)(x)
 
 
-def min(x, axis=None, keepdims=False):
+def F_min(x, axis=None, keepdims=False):
     return Min(axis, keepdims)(x)
 
 
@@ -2080,7 +2107,7 @@ class Clip(Function):
         self.x_max = x_max
 
     def forward(self, x):
-        xp = cuda.get_array_module(x)
+        xp = get_array_module(x)
         y = xp.clip(x, self.x_min, self.x_max)
         return y
 
@@ -2208,7 +2235,7 @@ class Linear(Layer):
     def forward(self, x):
         if self.W.data is None:
             self.in_size = x.shape[1]
-            xp = cuda.get_array_module(x)
+            xp = get_array_module(x)
             self._init_W(xp)
 
         y = F.linear(x, self.W, self.b)
@@ -2257,7 +2284,7 @@ class Conv2d(Layer):
     def forward(self, x):
         if self.W.data is None:
             self.in_channels = x.shape[1]
-            xp = cuda.get_array_module(x)
+            xp = get_array_module(x)
             self._init_W(xp)
 
         y = F.conv2d(x, self.W, self.b, self.stride, self.pad)
@@ -2306,7 +2333,7 @@ class Deconv2d(Layer):
     def forward(self, x):
         if self.W.data is None:
             self.in_channels = x.shape[1]
-            xp = cuda.get_array_module(x)
+            xp = get_array_module(x)
             self._init_W(xp)
 
         y = F.deconv2d(x, self.W, self.b, self.stride, self.pad)
@@ -2411,7 +2438,7 @@ class BatchNorm(Layer):
         self.beta = Parameter(None, name='beta')
 
     def _init_params(self, x):
-        xp = cuda.get_array_module(x)
+        xp = get_array_module(x)
         D = x.shape[1]
         if self.avg_mean.data is None:
             self.avg_mean.data = xp.zeros(D, dtype=x.dtype)
@@ -2811,7 +2838,7 @@ class MomentumSGD(Optimizer):
     def update_one(self, param):
         v_key = id(param)
         if v_key not in self.vs:
-            xp = cuda.get_array_module(param.data)
+            xp = get_array_module(param.data)
             self.vs[v_key] = xp.zeros_like(param.data)
 
         v = self.vs[v_key]
@@ -2828,7 +2855,7 @@ class AdaGrad(Optimizer):
         self.hs = {}
 
     def update_one(self, param):
-        xp = cuda.get_array_module(param.data)
+        xp = get_array_module(param.data)
 
         h_key = id(param)
         if h_key not in self.hs:
@@ -2852,7 +2879,7 @@ class AdaDelta(Optimizer):
         self.msdx = {}
 
     def update_one(self, param):
-        xp = cuda.get_array_module(param.data)
+        xp = get_array_module(param.data)
 
         key = id(param)
         if key not in self.msg:
@@ -2894,7 +2921,7 @@ class Adam(Optimizer):
         return self.alpha * math.sqrt(fix2) / fix1
 
     def update_one(self, param):
-        xp = cuda.get_array_module(param.data)
+        xp = get_array_module(param.data)
 
         key = id(param)
         if key not in self.ms:
@@ -3018,7 +3045,7 @@ def plot_dot_graph(output, verbose=True, to_file='graph.png'):
 # =============================================================================
 # Utility functions for numpy (numpy magic)
 # =============================================================================
-def sum_to(x, shape):
+def U_sum_to(x, shape):
     """Sum elements along axes to output an array of a given shape.
 
     Args:
@@ -3072,7 +3099,7 @@ def reshape_sum_backward(gy, x_shape, axis, keepdims):
 
 
 def logsumexp(x, axis=1):
-    xp = cuda.get_array_module(x)
+    xp = get_array_module(x)
     m = x.max(axis=axis, keepdims=True)
     y = x - m
     xp.exp(y, out=y)
@@ -3162,9 +3189,9 @@ def numerical_grad(f, x, *args, **kwargs):
     eps = 1e-4
 
     x = x.data if isinstance(x, Variable) else x
-    xp = cuda.get_array_module(x)
+    xp = get_array_module(x)
     if xp is not np:
-        np_x = cuda.as_numpy(x)
+        np_x = as_numpy(x)
     else:
         np_x = x
     grad = xp.zeros_like(x)
@@ -3206,7 +3233,7 @@ def array_equal(a, b):
     """
     a = a.data if isinstance(a, Variable) else a
     b = b.data if isinstance(b, Variable) else b
-    a, b = cuda.as_numpy(a), cuda.as_numpy(b)
+    a, b = as_numpy(a), as_numpy(b)
     return np.array_equal(a, b)
 
 
@@ -3226,7 +3253,7 @@ def array_allclose(a, b, rtol=1e-4, atol=1e-5):
     """
     a = a.data if isinstance(a, Variable) else a
     b = b.data if isinstance(b, Variable) else b
-    a, b = cuda.as_numpy(a), cuda.as_numpy(b)
+    a, b = as_numpy(a), as_numpy(b)
     return np.allclose(a, b, atol=atol, rtol=rtol)
 
 
@@ -3303,4 +3330,3 @@ def pair(x):
     else:
         raise ValueError
 
-print('hello')
