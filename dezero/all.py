@@ -1977,7 +1977,7 @@ def accuracy(y, t):
 def dropout(x, dropout_ratio=0.5):
     x = as_variable(x)
 
-    if dezero.Config.train:
+    if Config.train:
         xp = get_array_module(x)
         mask = xp.random.rand(*x.shape) > dropout_ratio
         scale = xp.array(1.0 - dropout_ratio).astype(x.dtype)
@@ -2006,7 +2006,7 @@ class BatchNorm(Function):
 
         xp = get_array_module(x)
 
-        if dezero.Config.train:
+        if Config.train:
             mean = x.mean(axis=0)
             var = x.var(axis=0)
             inv_std = 1 / xp.sqrt(var + self.eps)
