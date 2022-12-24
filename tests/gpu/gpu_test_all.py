@@ -1,6 +1,7 @@
 import unittest
 
-import numpy as np
+#import cupy as np  # !! CUPY !!
+import cupy as cp
 import chainer
 import chainer.functions as CF
 
@@ -28,7 +29,58 @@ from dezero.all import *
 # =============================================================================
 # =============================================================================
 # =============================================================================
-#TODO
+class TestLinear(unittest.TestCase):
+
+    def test_forward1(self):
+        x = Variable(cp.array([[1, 2, 3], [4, 5, 6]]))
+        w = Variable(x.data.T)
+        b = None
+        y = linear(x, w, b)
+
+        res = y.data
+        expected = cp.array([[14, 32], [32, 77]])
+        self.assertTrue(array_allclose(res, expected))
+
+    def test_forward2(self):
+        x = cp.array([[1, 2, 3], [4, 5, 6]]).astype('f')
+        W = x.T
+        b = None
+        y = linear(x, W, b)
+
+        cy = chainer.functions.linear(x, W.T)
+        self.assertTrue(array_allclose(y.data, cy.data))
+
+    def test_forward3(self):
+        layer = chainer.links.Linear(3, 2)
+        layer.to_gpu()
+        x = cp.array([[1, 2, 3], [4, 5, 6]]).astype('f')
+        W = layer.W.data.T
+        b = layer.b.data
+        y = linear(x, W, b)
+
+        cy = layer(x)
+        self.assertTrue(array_allclose(y.data, cy.data))
+
+    def test_backward1(self):
+        x = cp.random.randn(3, 2)
+        W = cp.random.randn(2, 3)
+        b = cp.random.randn(3)
+        f = lambda x: linear(x, W, b)
+        self.assertTrue(gradient_check(f, x))
+
+    def test_backward1(self):
+        x = cp.random.randn(3, 2)
+        W = cp.random.randn(2, 3)
+        b = cp.random.randn(3)
+        f = lambda x: linear(x, W, b)
+        self.assertTrue(gradient_check(f, x))
+
+    def test_backward2(self):
+        x = cp.random.randn(100, 200)
+        W = cp.random.randn(200, 300)
+        b = None
+        f = lambda x: linear(x, W, b)
+        self.assertTrue(gradient_check(f, x))
 
 
 # =============================================================================
