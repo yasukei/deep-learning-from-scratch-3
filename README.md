@@ -1,8 +1,24 @@
-This is dezero in one python file. It is for atcoder.
+# dezero.all
 
-dezero/all.py is product code.
+It has all dezero code in one file.
 
-dezero/test_all.py is test code.
+It renamed some functions, methods and so on from original code in order to avoid name conflicts such as 'Linear' in dezero.functions and dezero.layers.
+
+## Product code
+
+- dezero/all.py
+
+## Test code
+
+- tests/test_all.py
+- tests/gpu/gpu_test_all.py [^1]
+
+```sh
+python -m unittest tests/test_all.py
+python -m unittest tests/gpu/gpu_test_all.py
+```
+
+[^1]: gpu_test_all.py imports only tests like system test, which are gpu_test_batchnorm.py, gpu_test_linear.py and gpu_test_vgg16.py.
 
 <!--
 
